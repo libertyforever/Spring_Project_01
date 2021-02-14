@@ -171,10 +171,10 @@ function r_print_list2(result){
 		let pno = parseInt($(rList1_list[i]).find("pno").text());
 		
 		let ttl2 = parseInt($(rList2_list[i]).find("total").text());
-		let cpn2 = parseInt($(rList2_list[i]).find("coupon").text());
+		let cnt2 = parseInt($(rList2_list[i]).find("count").text());
 		
 		ttl2=isNaN(ttl2)?"X":ttl2;
-		cpn2=isNaN(cpn2)?"X":cpn2;
+		cnt2=isNaN(cnt2)?"X":cnt2;
 		
 		
 		console.log(ttl2);
@@ -188,13 +188,13 @@ function r_print_list2(result){
 		if($("#product").val()=='sld'){
 			txt += '<td> '+(ttl * 100 / sum_ttl).toFixed(2).toLocaleString()+' %</td>';
 			txt += '<td> '+ttl2.toLocaleString()+' </td>';
-			txt += '<td style="color:'+(((ttl2=="X")||(ttl==ttl2))?'black':(ttl-ttl2<0?'red':'blue'))+'"> '
+			txt += '<td style="color:'+(((ttl2=="X")||(ttl==ttl2))?'black':(ttl-ttl2<0?'blue':'red'))+'"> '
 			+((ttl2=="X")?"-":((ttl-ttl2)*100/ttl).toFixed(2).toLocaleString()+' %')+'</td>';
 		}else{
 			txt += '<td> '+(cnt * 100 / sum_cnt).toFixed(2).toLocaleString()+' %</td>';
-			txt += '<td> '+cpn2.toLocaleString()+' </td>';
-			txt += '<td style="color:'+(((cpn2=="X")||(cpn==cpn2))?'black':(cpn-cpn2<0?'red':'blue'))+'"> '
-			+((cpn2=="X")?"-":((cpn-cpn2)*100/cpn).toFixed(2).toLocaleString()+' %')+'</td>';	
+			txt += '<td> '+cnt2.toLocaleString()+' </td>';
+			txt += '<td style="color:'+(((cnt2=="X")||(cnt==cnt2))?'black':(cnt-cnt2<0?'blue':'red'))+'"> '
+			+((cnt2=="X")?"-":((cnt-cnt2)*100/cnt).toFixed(2).toLocaleString()+' %')+'</td>';	
 		}
 		sum1 += cpn;
 		
@@ -260,6 +260,7 @@ $(document).on("click", "#caList", function(e){
  
 $(document).on("click", "#proList", function(e){
     e.preventDefault();
+	$("#r-comment").show();
     r_list_rpt2();
  });
  
@@ -298,6 +299,7 @@ $(function(){
 	$("#product").hide();
 	$("#date-m").hide();
 	$("#proList").hide();
+	$("#r-comment").hide();
 	}); 
  
  
@@ -310,6 +312,8 @@ function r_cht_one(pno){
 	let this_m = date_m.replace("-","");
 	console.log(this_m);
 	info = {end: this_m};
+	
+	$("#r-comment").hide();
 	
 	//put 방식 활용
 	$.ajax({
@@ -409,8 +413,24 @@ function r_print_Lcht(result){
 	}
 	
 	let r = xmym_sum / (Math.sqrt(xmsq_sum) * Math.sqrt(ymsq_sum))
-	console.log('상관계수: ' + r);
+	let r2 = Math.pow(r,2);
 	
+	let t_dist = r*(Math.sqrt(4/(1-r2))); //표본크기6에 대한 자유도 4
+	
+	console.log('상관계수: ' + r);
+	console.log('결정계수: ' + r2);
+	console.log('t분포: '+ t_dist);
+
+	if(t_dist<2.13){
+		$("#pvalue").text("(95% 미만)");
+		$("#pvalue").attr("style","color:red");
+	}else if(t_dist<3.75){
+		$("#pvalue").text("(95%~99% 신뢰구간)");
+		$("#pvalue").attr("style","color:#dcb518");
+	}else{
+		$("#pvalue").text("(99% 이상)");
+		$("#pvalue").attr("style","color:blue");
+	}	
 	// 예측선
 	let sxy = xy_sum - (x_sum * y_sum)/list_ttl.length;
 	let sxx = x2_sum - (x_sum * x_sum)/list_ttl.length;
@@ -425,7 +445,6 @@ function r_print_Lcht(result){
 	list_month.push("다음달 예상");
 	list_ttl.push(x_pred);
 	//list_ttl2.push(x_pred - (3000*((y_sum/list_ttl.length))));
-	
 	
 	
 	$("#sixmnt").text($(rList[0]).find("pname").text());
@@ -472,6 +491,14 @@ function r_print_Lcht(result){
 	     ticks: {
 	       beginAtZero: false
 	     }
+	   }],
+	   yAxes:[{
+	     ticks: {
+	       beginAtZero: false,
+		   callback: function(label, index, labels) {
+                        return label.toLocaleString();
+					}
+	     }
 	   }]
 	 },
 	 legend: {
@@ -514,6 +541,9 @@ function r_print_Bcht(cnt_list,prc_list,name_list){
 	   yAxes: [{
 			ticks: {
 				beginAtZero: true,
+		 		callback: function(label, index, labels) {
+                        return label.toLocaleString();
+					}
 			}
 	 }]
 	}
